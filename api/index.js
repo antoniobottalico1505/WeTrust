@@ -1,0 +1,88 @@
+// C:\Users\Utente\WeTrust\api\index.js
+// WeTrust API – demo con richieste IN MEMORIA
+
+const fastify = require("fastify");
+const cors = require("@fastify/cors");
+
+// archivio in memoria (si resetta se riavvii l'API)
+const requests = [
+  {
+    id: "1",
+    title: "Accompagnare mia madre dal medico",
+    description:
+      "Cerco qualcuno di affidabile per accompagnare mia madre di 78 anni alla visita in ospedale domani mattina.",
+    city: "Torino",
+    status: "open",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    title: "Aiuto con spesa settimanale",
+    description:
+      "Mi serve una mano con la spesa al supermercato una volta a settimana.",
+    city: "Milano",
+    status: "matched",
+    createdAt: new Date().toISOString(),
+  },
+];
+
+async function start() {
+  const app = fastify({ logger: true });
+
+  await app.register(cors, { origin: true });
+
+  // healthcheck
+  app.get("/health", async () => {
+    return { status: "ok", service: "wetrust-api" };
+  });
+
+  // lista richieste
+  app.get("/requests", async () => {
+    return { requests };
+  });
+
+  // nuova richiesta (pulsante I need)
+  app.post("/requests", async (request, reply) => {
+    const { description, city } = request.body || {};
+
+    if (!description || !description.trim()) {
+      reply.code(400);
+      return { ok: false, error: "Descrivi almeno in poche parole il bisogno." };
+    }
+
+    const cleanDescription = description.trim();
+
+    const newRequest = {
+      id: String(Date.now()),
+      title: cleanDescription.slice(0, 80),
+      description: cleanDescription,
+      city: city && city.trim(),
+      status: "open",
+      createdAt: new Date().toISOString(),
+    };
+
+    requests.unshift(newRequest);
+
+    return { ok: true, request: newRequest };
+  });
+
+  // contatti (nome, email, messaggio)
+  app.post("/contact", async (request, reply) => {
+    const { name, email, message } = request.body || {};
+    app.log.info({ name, email, message }, "Nuovo contatto WeTrust");
+    return { ok: true };
+  });
+
+  const port = 4000;
+  const host = "0.0.0.0";
+
+  try {
+    await app.listen({ port, host });
+    app.log.info(`API WeTrust in ascolto su http://localhost:${port}`);
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+}
+
+start();
