@@ -73,12 +73,14 @@ async function start() {
     return { ok: true };
   });
 
-  const port = 4000;
-  const host = "0.0.0.0";
+  // 🔴 QUI LA PARTE IMPORTANTE PER RENDER
+  const PORT = process.env.PORT || process.env.API_PORT || 4000;
+  const HOST = "0.0.0.0";
 
   try {
-    await app.listen({ port, host });
-    app.log.info(`API WeTrust in ascolto su http://localhost:${port}`);
+    const address = await app.listen({ port: PORT, host: HOST });
+    app.log.info(`Server listening at ${address}`);
+    console.log(`API WeTrust in ascolto su http://${HOST}:${PORT}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
