@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 const API_BASE =
-process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -30,14 +30,28 @@ export default function ContactPage() {
         body: JSON.stringify({ name, email, message }),
       });
 
-      await res.json();
-      setFeedback("Messaggio inviato. Ti risponderemo il prima possibile.");
+      const data = await res.json().catch(() => ({}));
+
+      // Se l'API risponde con errore (es. Render blocca l'email), mostriamo la mail diretta
+      if (!res.ok || (data && data.ok === false)) {
+        console.error("Errore API contatti:", data);
+        setFeedback(
+          "C'è stato un problema con l'invio. Puoi scriverci direttamente a: we20trust25@gmail.com"
+        );
+        return;
+      }
+
+      setFeedback(
+        "Messaggio inviato. In ogni caso puoi sempre scriverci anche a: we20trust25@gmail.com"
+      );
       setName("");
       setEmail("");
       setMessage("");
     } catch (err) {
       console.error(err);
-      setFeedback("Errore durante l'invio del messaggio.");
+      setFeedback(
+        "Errore durante l'invio. Puoi scriverci direttamente a: we20trust25@gmail.com"
+      );
     } finally {
       setSending(false);
     }
@@ -67,8 +81,9 @@ export default function ContactPage() {
         <main className="main">
           <h1>Contatti</h1>
           <p className="subtitle">
-            Vuoi parlare di partnership o investimento? Scrivici qui, il
-            messaggio arriva al team WeTrust.
+            Vuoi parlare di partnership o investimento? Puoi usare il form qui
+            sotto oppure scriverci direttamente a{" "}
+            <strong>we20trust25@gmail.com</strong>.
           </p>
 
           <form className="form" onSubmit={handleSubmit}>
@@ -110,37 +125,37 @@ export default function ContactPage() {
       </div>
 
       <style jsx>{`
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: radial-gradient(
-    circle at top left,
-    #00b4ff 0,
-    #00e0a0 20%,
-    #020617 55%
-  );
-  color: #e5e7eb;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont,
-    "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-}
+        .page {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          background: radial-gradient(
+            circle at top left,
+            #00b4ff 0,
+            #00e0a0 20%,
+            #020617 55%
+          );
+          color: #e5e7eb;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont,
+            "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+        }
 
         .header {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 16px 20px 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;  /* PRIMA era space-between */
-  gap: 16px;
-}
+          max-width: 1120px;
+          margin: 0 auto;
+          padding: 16px 20px 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center; /* PRIMA era space-between */
+          gap: 16px;
+        }
 
-       .logo-area {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: 64px;    /* spinge i loghi un po’ più a destra */
-}
+        .logo-area {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-left: 64px; /* spinge i loghi un po’ più a destra */
+        }
 
         .logo-icon {
           width: 40px;
@@ -151,27 +166,27 @@ export default function ContactPage() {
         }
 
         .nav {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
-  margin-right: 64px;   /* spinge i link un po’ più a sinistra */
-}
+          display: flex;
+          gap: 12px;
+          font-size: 14px;
+          margin-right: 64px; /* spinge i link un po’ più a sinistra */
+        }
 
-.nav a {
-  color: #ffffff !important;
-  text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.6);
-}
+        .nav a {
+          color: #ffffff !important;
+          text-decoration: none;
+          padding: 6px 10px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.6);
+        }
 
-.nav a:visited {
-  color: #ffffff !important;
-}
+        .nav a:visited {
+          color: #ffffff !important;
+        }
 
-.nav a:hover {
-  color: #ffffff !important;
-}
+        .nav a:hover {
+          color: #ffffff !important;
+        }
 
         .main {
           flex: 1;
