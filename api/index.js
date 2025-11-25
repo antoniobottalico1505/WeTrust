@@ -1,8 +1,9 @@
 // C:\Users\Utente\WeTrust\api\index.js
-// WeTrust API – demo con richieste IN MEMORIA
+// WeTrust API – demo con richieste IN MEMORIA + invio email contatti
 
 const fastify = require("fastify");
 const cors = require("@fastify/cors");
+const nodemailer = require("nodemailer");
 
 // archivio in memoria (si resetta se riavvii l'API)
 const requests = [
@@ -30,6 +31,17 @@ async function start() {
   const app = fastify({ logger: true });
 
   await app.register(cors, { origin: true });
+
+  // --- CONFIGURAZIONE MAILER (usa variabili d'ambiente) ---
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === "true", // true se usi 465
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 
   // healthcheck
   app.get("/health", async () => {
@@ -66,11 +78,40 @@ async function start() {
     return { ok: true, request: newRequest };
   });
 
-  // contatti (nome, email, messaggio)
+  // contatti (nome, email, messaggio) + invio email a Antonio
   app.post("/contact", async (request, reply) => {
     const { name, email, message } = request.body || {};
     app.log.info({ name, email, message }, "Nuovo contatto WeTrust");
-    return { ok: true };
+
+    if (!email || !message) {
+      reply.code(400);
+      return { ok: false, error: "Email e messaggio sono obbligatori." };
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"WeTrust Contatti" <${
+          process.env.SMTP_FROM || process.env.SMTP_USER
+        }>`,
+        to: "antoniobottalico1505@gmail.com",
+        replyTo: email,
+        subject: "Nuovo contatto dal sito WeTrust",
+        text:
+          `Nome: ${name || "(non fornito)"}\n` +
+          `Email: ${email}\n\n` +
+          `Messaggio:\n${message}`,
+      });
+
+      return { ok: true };
+    } catch (err) {
+      app.log.error(err, "Errore invio email contatto");
+      reply.code(500);
+      return {
+        ok: false,
+        error:
+          "Messaggio ricevuto ma c'è stato un errore nell'invio dell'email.",
+      };
+    }
   });
 
   // PORTA PER RENDER + LOCALE
