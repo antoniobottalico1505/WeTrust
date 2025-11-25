@@ -73,7 +73,7 @@ async function start() {
     return { ok: true };
   });
 
-  // 🔴 Porta giusta per Render / provider
+  // PORTA PER RENDER + LOCALE
   const PORT = process.env.PORT || process.env.API_PORT || 4000;
   const HOST = "0.0.0.0";
 
